@@ -1,0 +1,33 @@
+// ==Nilla==
+// @name Show Hidden CSS Values
+// @version 0.1 02/03/2023
+// @description Show hidden CSS values while inspecting a web page
+// @match *://*/*
+// @grant none
+
+// Observe changes to the inspector to catch when the user switches to the "Computed" tab
+var observer = new MutationObserver(function (mutations) {
+    mutations.forEach(function (mutation) {
+        if (mutation.target.classList.contains("theme-body") &&
+            mutation.target.querySelector(".computed-property-view")) {
+            addHiddenCSS();
+        }
+    });
+});
+
+// Start observing changes to the inspector
+observer.observe(document.querySelector("#inspector-container"), {
+    childList: true,
+    subtree: true
+});
+
+// Add the "display: none" styles to the computed styles
+function addHiddenCSS() {
+    // Get the computed styles
+    var computedStyles = document.querySelector(".computed-property-view").children[0].children[0];
+
+    // Add a new style to the computed styles
+    var newStyle = document.createElement("tr");
+    newStyle.innerHTML = "<td><code>display</code></td><td><code>none</code></td>";
+    computedStyles.appendChild(newStyle);
+}

@@ -1,0 +1,86 @@
+import UIKit
+
+class Meal {
+    var name: String
+    var calories: Double
+    var fat: Double
+    var protein: Double
+    var carbohydrates: Double
+    
+    init(name: String, calories: Double, fat: Double, protein: Double, carbohydrates: Double) {
+        self.name = name
+        self.calories = calories
+        self.fat = fat
+        self.protein = protein
+        self.carbohydrates = carbohydrates
+    }
+}
+
+class MealTracker {
+    var meals: [Meal]
+    
+    init() {
+        self.meals = []
+    }
+    
+    func addMeal(meal: Meal) {
+        meals.append(meal)
+    }
+    
+    func totalCalories() -> Double {
+        var total = 0.0
+        for meal in meals {
+            total += meal.calories
+        }
+        return total
+    }
+    
+    func totalFat() -> Double {
+        var total = 0.0
+        for meal in meals {
+            total += meal.fat
+        }
+        return total
+    }
+    
+    func totalProtein() -> Double {
+        var total = 0.0
+        for meal in meals {
+            total += meal.protein
+        }
+        return total
+    }
+    
+    func totalCarbohydrates() -> Double {
+        var total = 0.0
+        for meal in meals {
+            total += meal.carbohydrates
+        }
+        return total
+    }
+    
+    func suggestedMacrosForWeightLoss() -> (Double, Double, Double) {
+        let targetCalories = totalCalories() * 0.75
+        let targetProtein = totalProtein()
+        let targetCarbohydrates = totalCarbohydrates() * 0.5
+        let targetFat = targetCalories - targetProtein * 4 - targetCarbohydrates * 4
+        return (targetFat, targetProtein, targetCarbohydrates)
+    }
+    
+    func suggestedMacrosForMuscleGain() -> (Double, Double, Double) {
+        let targetCalories = totalCalories() * 1.1
+        let targetProtein = totalProtein() * 1.5
+        let targetCarbohydrates = totalCarbohydrates() * 1.5
+        let targetFat = targetCalories - targetProtein * 4 - targetCarbohydrates * 4
+        return (targetFat, targetProtein, targetCarbohydrates)
+    }
+}
+
+let mealTracker = MealTracker()
+mealTracker.addMeal(meal: Meal(name: "Breakfast", calories: 400, fat: 20, protein: 20, carbohydrates: 30))
+mealTracker.addMeal(meal: Meal(name: "Lunch", calories: 500, fat: 25, protein: 30, carbohydrates: 40))
+mealTracker.addMeal(meal: Meal(name: "Dinner", calories: 600, fat: 30, protein: 40, carbohydrates: 50))
+
+print("Total calories: \(mealTracker.totalCalories())")
+print("Total fat: \(mealTracker.totalFat())")
+print("Total protein: \(mealTracker.totalProtein())

@@ -1,0 +1,130 @@
+cpp
+Copy code
+#include <iostream>
+#include <curl/curl.h>
+#include <iconv.h>
+#include <string>
+
+// Function to convert UTF-8 text to Simplified Chinese using libiconv
+std::string utf8_to_chinese(const char* utf8_text)
+{
+    // Initialize the iconv converter
+    iconv_t converter = iconv_open("zh_CN.gb18030", "utf-8");
+
+    // Calculate the length of the input text
+    size_t input_length = strlen(utf8_text);
+
+    // Allocate memory for the output buffer
+    size_t output_length = input_length * 4; // 4 is the maximum expansion factor for GB18030 encoding
+    char* chinese_text = new char[output_length + 1]; // Add 1 for null terminator
+
+    // Perform the conversion
+    char* input_ptr = (char*) utf8_text;
+    char* output_ptr = chinese_text;
+    size_t bytes_left = input_length;
+    size_t bytes_written = 0;
+    while (bytes_left > 0)
+    {
+        bytes_written = iconv(converter, &input_ptr, &bytes_left, &output_ptr, &output_length);
+        if (bytes_written == (size_t) -1)
+        {
+            std::cerr << "Error: iconv conversion failed" << std::endl;
+            break;
+        }
+    }
+
+    // Null-terminate the output buffer
+    *output_ptr = '\0';
+
+    // Close the iconv converter
+    iconv_close(converter);
+
+    // Return the converted Chinese text
+    return std::string(chinese_text);
+}
+
+// Function to translate Simplified Chinese to English using Google Translate API
+std::string chinese_to_english(const char* chinese_text)
+{
+    // Initialize the libcurl handle
+    CURL* curl_handle = curl_easy_init();
+
+    // Set the curl options
+    std::string url = "https://translate.google.com/translate_a/single?client=gtx&sl=zh-CN&tl=en&dt=t&q=";
+    url += curl_easy_escape(curl_handle, chinese_text, strlen(chinese_text));
+    curl_easy_setopt(curl_handle, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, [](char* ptr, size_t size, size_t nmemb, void* userdata) -> size_t {
+        *((std::string*)userdata) += std::string(ptr, size * nmemb);
+        return size * nmemb;
+    });
+    std::string response_string;
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, &response_string);
+
+    // Perform the curl request
+    CURLcode curl_result = curl_easy_perform(curl_handle);
+    if (curl_result != CURLE_OK)
+    {
+        std::cerr << "Error: curl request failed: " << curl_easy_strerror(curl_result) << std::endl;
+    }
+
+    // Clean up the curl handle
+    curl_easy_cleanup(curl_handle);
+
+  // Parse the translation result from the JSON response
+    std::string english_text;
+    size_t start_index = response_string.find("\"translatedText\":\"") + strlen("\"translatedText\":\"");
+    size_t end_index = response_string.find("\"", start_index);
+    if (start_index != std::string::npos && end_index != std::string::npos)
+    {
+        english_text = response_string.substr(start_index, end_index - start_index);
+    }
+    else
+    {
+        std::cerr << "Error: could not find translation in response string" << std::endl;
+    }
+
+    return english_text;
+}
+
+// Main function
+int main(int argc, char** argv)
+{
+    // Check the command-line arguments
+    if (argc != 2)
+    {
+        std::cerr << "Usage: converter <input_file>" << std::endl;
+        return 1;
+    }
+
+    // Read the input file
+    std::ifstream input_file(argv[1], std::ios::binary);
+    if (!input_file)
+    {
+        std::cerr << "Error: could not open input file: " << argv[1] << std::endl;
+        return 1;
+    }
+    std::string input_text((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
+    input_file.close();
+
+    // Convert the input text to Simplified Chinese
+    std::string chinese_text = utf8_to_chinese(input_text.c_str());
+
+    // Translate the Simplified Chinese to English
+    std::string english_text = chinese_to_english(chinese_text.c_str());
+
+    // Print the translated text to the console
+    std::cout << english_text << std::endl;
+
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+######This is the main function that reads in a file specified as a command line argument, calls the utf8_to_chinese function to convert the UTF-8 text to Simplified Chinese, calls the chinese_to_english function to translate the Simplified Chinese to English, and prints the translated text to the console. I was simply tired of going back and forth to different conversion websites and wanted something offline.

@@ -1,0 +1,48 @@
+#!/bin/bash - this one wasn't made by myself. It didn't have credits, and I don't recall if I've added much/any.
+
+# check if the whois tool is installed
+if ! which whois > /dev/null; then
+  echo "Whois tool not found. Installing it now."
+  sudo apt-get install -y whois
+fi
+
+# check if the dig tool is installed
+if ! which dig > /dev/null; then
+  echo "Dig tool not found. Installing it now."
+  sudo apt-get install -y dnsutils
+fi
+
+# check if the curl tool is installed
+if ! which curl > /dev/null; then
+  echo "Curl tool not found. Installing it now."
+  sudo apt-get install -y curl
+fi
+
+# check if the jq tool is installed
+if ! which jq > /dev/null; then
+  echo "JQ tool not found. Installing it now."
+  sudo apt-get install -y jq
+fi
+
+# ask the user for an email address or username
+echo -n "Enter email or username to search for: "
+read search_term
+
+# use the whois tool to search for information about the email or username
+whois_output=$(whois $search_term)
+echo "$whois_output"
+
+# use the dig tool to search for information about the email or username
+dig_output=$(dig $search_term)
+echo "$dig_output"
+
+# use the curl tool to search for information about the email or username
+curl_output=$(curl -s "https://api.hunter.io/v2/email-verifier?email=$search_term&api_key=YOUR_API_KEY")
+
+# use the jq tool to parse the output from the curl command and extract relevant information
+email_found=$(echo "$curl_output" | jq -r '.data.result')
+email_score=$(echo "$curl_output" | jq -r '.data.score')
+
+# output the results
+echo "Email found: $email_found"
+echo "Email score: $email_score"
